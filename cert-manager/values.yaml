@@ -1,0 +1,5 @@
+# cert-manager Helm values for the uds-prereq-services base package.
+# Install the CRDs alongside the chart so downstream config packages
+# (ClusterIssuers, Certificates) have their APIs available.
+crds:
+  enabled: true

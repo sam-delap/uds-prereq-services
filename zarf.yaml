@@ -1,0 +1,69 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-prereq-services
+  description: "UDS Core prerequisite services (MetalLB + cert-manager) with no environment-specific configuration"
+  version: "###ZARF_PKG_TMPL_VERSION###"
+
+components:
+  - name: metallb-namespace
+    required: true
+    description: "Create metallb-system namespace with privileged PSS (required for speaker pods)"
+    manifests:
+      - name: metallb-namespace
+        files:
+          - metallb/manifests/namespace.yaml
+
+  - name: metallb
+    required: true
+    description: "MetalLB load balancer controller and speakers (no IPAddressPool/L2Advertisement - supply via config package)"
+    charts:
+      - name: metallb
+        namespace: metallb-system
+        url: https://metallb.github.io/metallb
+        version: 0.14.9
+        releaseName: metallb
+        valuesFiles:
+          - metallb/values.yaml
+    images:
+      - quay.io/metallb/controller:v0.14.9
+      - quay.io/metallb/speaker:v0.14.9
+      - quay.io/frrouting/frr:9.1.0
+    actions:
+      onDeploy:
+        after:
+          - wait:
+              cluster:
+                kind: deployment
+                name: metallb-controller
+                namespace: metallb-system
+                condition: available
+
+  - name: cert-manager
+    required: true
+    description: "cert-manager controller, webhook, cainjector, and CRDs (no ClusterIssuers - supply via config package)"
+    charts:
+      - name: cert-manager
+        namespace: cert-manager
+        url: https://charts.jetstack.io
+        version: v1.21.0
+        releaseName: cert-manager
+        valuesFiles:
+          - cert-manager/values.yaml
+    images:
+      - quay.io/jetstack/cert-manager-controller:v1.21.0
+      - quay.io/jetstack/cert-manager-webhook:v1.21.0
+      - quay.io/jetstack/cert-manager-cainjector:v1.21.0
+      - quay.io/jetstack/cert-manager-startupapicheck:v1.21.0
+    actions:
+      onDeploy:
+        after:
+          - wait:
+              cluster:
+                kind: deployment
+                name: cert-manager-webhook
+                namespace: cert-manager
+                condition: available
+
+variables:
+  - name: VERSION
+    description: "Package version, injected at build time by semantic-release"

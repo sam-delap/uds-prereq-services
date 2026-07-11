@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/main/tasks.schema.json
+
+variables:
+  - name: VERSION
+    description: "Package version to build/publish (injected by semantic-release in CI)"
+    default: "0.0.0-dev"
+  - name: REGISTRY
+    description: "OCI registry namespace to publish to"
+    default: "ghcr.io/sam-delap"
+  - name: ARCH
+    description: "Target architecture"
+    default: "amd64"
+
+tasks:
+  - name: build
+    description: "Create the uds-prereq-services Zarf package"
+    actions:
+      - cmd: zarf package create . --set VERSION=${VERSION} --architecture ${ARCH} --confirm
+
+  - name: publish
+    description: "Publish the built package to the OCI registry"
+    actions:
+      - cmd: zarf package publish zarf-package-uds-prereq-services-${ARCH}-${VERSION}.tar.zst oci://${REGISTRY} --confirm
+
+  - name: deploy
+    description: "Deploy the uds-prereq-services package to the current cluster"
+    actions:
+      - cmd: zarf package deploy oci://${REGISTRY}/uds-prereq-services:${VERSION} --confirm
+
+  - name: lint
+    description: "Lint the Zarf package definition"
+    actions:
+      - cmd: zarf dev lint . --set VERSION=${VERSION}
