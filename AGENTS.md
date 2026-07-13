@@ -26,12 +26,16 @@ Requires `uds` (uds-cli) and `zarf` on PATH.
 uds run lint                    # zarf dev lint (do this before committing)
 uds run build --set VERSION=0.1.0
 uds run publish --set VERSION=0.1.0
+uds run build-all --set VERSION=0.1.0   # build both amd64 + arm64 (matches CI)
+uds run publish-all --set VERSION=0.1.0 # publish both arches to OCI (matches CI)
 uds run deploy --set VERSION=0.1.0   # deploys from OCI, not a local tarball
 ```
 
 Task vars (`tasks.yaml`): `VERSION` (default `0.0.0-dev`), `REGISTRY`
-(`ghcr.io/sam-delap`), `ARCH` (`amd64`). `VERSION` has no default in `zarf.yaml`, so it
-must be supplied via `--set VERSION=` on any direct `zarf` invocation.
+(`ghcr.io/sam-delap`), `ARCH` (`amd64`). `ARCH` only applies to the single-arch `build`/
+`publish` tasks; `build-all`/`publish-all` always do both `amd64` and `arm64`. `VERSION`
+has no default in `zarf.yaml`, so it must be supplied via `--set VERSION=` on any direct
+`zarf` invocation.
 
 ## Versioning / release (important gotchas)
 
@@ -40,7 +44,8 @@ must be supplied via `--set VERSION=` on any direct `zarf` invocation.
 - Versions come from **Conventional Commits** via semantic-release on push to `main`.
   Commit messages drive the release (`feat:`, `fix:`, etc.) — use them deliberately.
 - Publishing happens only in CI (`.github/workflows/release.yml`) via
-  `@semantic-release/exec`, which runs `zarf package create`+`publish`. Don't publish
+  `@semantic-release/exec`, which runs `zarf package create`+`publish` for both `amd64`
+  and `arm64` (published under one OCI tag as a multi-arch index). Don't publish
   manually from a branch.
 
 ## When editing components

@@ -118,16 +118,20 @@ Conventional Commits. On push to `main`, CI computes the next version, injects i
 Local build (uses `uds run`):
 
 ```bash
-uds run build --set VERSION=0.1.0
+uds run build --set VERSION=0.1.0        # single arch (ARCH var, default amd64)
 uds run publish --set VERSION=0.1.0
+uds run build-all --set VERSION=0.1.0    # both amd64 + arm64 (matches CI)
+uds run publish-all --set VERSION=0.1.0
 uds run lint
 ```
 
-Or directly with Zarf:
+Or directly with Zarf (one tarball per architecture):
 
 ```bash
-zarf package create . --set VERSION=0.1.0 --confirm
+zarf package create . --set VERSION=0.1.0 --architecture amd64 --confirm
+zarf package create . --set VERSION=0.1.0 --architecture arm64 --confirm
 zarf package publish zarf-package-uds-prereq-services-amd64-0.1.0.tar.zst oci://ghcr.io/sam-delap --confirm
+zarf package publish zarf-package-uds-prereq-services-arm64-0.1.0.tar.zst oci://ghcr.io/sam-delap --confirm
 ```
 
 ## Notes

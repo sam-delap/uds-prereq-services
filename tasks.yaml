@@ -22,6 +22,18 @@ tasks:
     actions:
       - cmd: zarf package publish zarf-package-uds-prereq-services-${ARCH}-${VERSION}.tar.zst oci://${REGISTRY} --confirm
 
+  - name: build-all
+    description: "Create the Zarf package for both amd64 and arm64 (matches CI)"
+    actions:
+      - cmd: zarf package create . --set VERSION=${VERSION} --architecture amd64 --confirm
+      - cmd: zarf package create . --set VERSION=${VERSION} --architecture arm64 --confirm
+
+  - name: publish-all
+    description: "Publish both amd64 and arm64 packages to the OCI registry (matches CI)"
+    actions:
+      - cmd: zarf package publish zarf-package-uds-prereq-services-amd64-${VERSION}.tar.zst oci://${REGISTRY} --confirm
+      - cmd: zarf package publish zarf-package-uds-prereq-services-arm64-${VERSION}.tar.zst oci://${REGISTRY} --confirm
+
   - name: deploy
     description: "Deploy the uds-prereq-services package to the current cluster"
     actions:
