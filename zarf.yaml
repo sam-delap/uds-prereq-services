@@ -64,6 +64,53 @@ components:
                 namespace: cert-manager
                 condition: available
 
+  - name: metallb-config
+    required: false
+    default: true
+    description: "Opinionated MetalLB IPAddressPool + L2Advertisement (opt out with --components=-metallb-config to bring your own)"
+    manifests:
+      - name: metallb-config
+        namespace: metallb-system
+        files:
+          - metallb/manifests/metallb-config.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: "Wait for MetalLB IPAddressPool CRD to be established"
+            wait:
+              cluster:
+                kind: customresourcedefinition
+                name: ipaddresspools.metallb.io
+                condition: established
+
+  - name: cert-manager-config
+    required: false
+    default: true
+    description: "Opinionated Let's Encrypt ClusterIssuers via Cloudflare DNS-01 (opt out with --components=-cert-manager-config to bring your own)"
+    manifests:
+      - name: cert-manager-clusterissuers
+        namespace: cert-manager
+        files:
+          - cert-manager/manifests/clusterissuers.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: "Wait for cert-manager ClusterIssuer CRD to be established"
+            wait:
+              cluster:
+                kind: customresourcedefinition
+                name: clusterissuers.cert-manager.io
+                condition: established
+
 variables:
   - name: VERSION
     description: "Package version, injected at build time by semantic-release"
+  - name: METALLB_IP_RANGE
+    description: "MetalLB IPAddressPool address range for the default-pool (metallb-config component)"
+    default: "192.168.1.200-192.168.1.210"
+  - name: ACME_EMAIL
+    description: "Contact email for the Let's Encrypt ClusterIssuers (cert-manager-config component)"
+    default: "admin@sams-club-it.com"
+  - name: DNS_ZONE
+    description: "DNS zone the Cloudflare DNS-01 solver is authoritative for (cert-manager-config component)"
+    default: "sams-club-it.com"
