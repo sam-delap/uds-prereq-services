@@ -1,0 +1,22 @@
+name: lint
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Zarf
+        uses: zarf-dev/setup-zarf@main
+        with:
+          version: v0.75.1
+
+      - name: Lint
+        run: zarf dev lint . --set VERSION=0.0.0-dev

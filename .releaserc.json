@@ -6,7 +6,7 @@
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "zarf package create . --set VERSION=${nextRelease.version} --architecture amd64 --confirm && zarf package publish zarf-package-uds-prereq-services-amd64-${nextRelease.version}.tar.zst oci://ghcr.io/sam-delap --confirm"
+        "publishCmd": "zarf package create . --set VERSION=${nextRelease.version} --architecture amd64 --confirm && zarf package create . --set VERSION=${nextRelease.version} --architecture arm64 --confirm && zarf package publish zarf-package-uds-prereq-services-amd64-${nextRelease.version}.tar.zst oci://ghcr.io/sam-delap --confirm && zarf package publish zarf-package-uds-prereq-services-arm64-${nextRelease.version}.tar.zst oci://ghcr.io/sam-delap --confirm"
       }
     ],
     [
@@ -16,6 +16,10 @@
           {
             "path": "zarf-package-uds-prereq-services-amd64-*.tar.zst",
             "label": "Zarf package (amd64)"
+          },
+          {
+            "path": "zarf-package-uds-prereq-services-arm64-*.tar.zst",
+            "label": "Zarf package (arm64)"
           }
         ]
       }
