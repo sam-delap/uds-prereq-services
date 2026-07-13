@@ -88,18 +88,54 @@ The `cert-manager-config` ClusterIssuers hardcode a **Cloudflare** DNS-01 solver
 If you use another DNS provider (Route53, Google, Azure, …), opt out of
 `cert-manager-config` and supply your own ClusterIssuers.
 
-### Required secret (out-of-band)
+### Required secret: Cloudflare API token (out-of-band)
 
 The ClusterIssuers reference a Cloudflare API token Secret you must create yourself — it
-is never committed to git:
+is never committed to git.
+
+#### 1. Create a least-privilege API token
+
+Use a **User API Token** (**My Profile → API Tokens → Create Token → Create Custom
+Token**). Do *not* start from a prebuilt template.
+
+> If you need a token that isn't tied to a personal user (a team/org where it should
+> outlive any one member), create an **Account-owned** token instead. The permissions and
+> zone scope below are identical — only the ownership differs.
+
+- **Name:** `cert-manager-dns01`
+- **Permissions** — add these two *granular* rows (leave the category as **Zone** for
+  both):
+  - **DNS** → **Edit**  (API name: `DNS Write`)
+  - **Zone** → **Read**  (API name: `Zone Read`)
+
+  > ⚠️ Don't select the broader **DNS & Zones** permission group. It bundles extras
+  > (Zone Settings, Zone Versioning, Zone DNS Settings, …) that cert-manager doesn't need.
+  > cert-manager only requires DNS write + Zone read.
+
+- **Zone Resources:** **Include → Specific zone → `<DNS_ZONE>`** (least privilege). The
+  `Zone Read` permission is what lets cert-manager resolve a single scoped zone; without
+  it you'll hit `... requires permission 'com.cloudflare.api.account.zone.list' to list
+  zones`.
+- Continue to the summary → **Create Token**, then copy the value (it is shown only once).
+
+#### 2. Store it as a Kubernetes Secret (kept out of shell history)
 
 ```bash
+read -rs CF_TOKEN            # paste the token; input is not echoed
+echo
 kubectl create secret generic cloudflare-api-token \
   --namespace cert-manager \
-  --from-literal=api-token='<cloudflare-dns-edit-token>'
+  --from-literal=api-token="$CF_TOKEN"
+unset CF_TOKEN
 ```
 
-The token needs `Zone:DNS:Edit` permission for your `DNS_ZONE`.
+The Secret name (`cloudflare-api-token`), key (`api-token`), and namespace
+(`cert-manager`) must stay as-is — the ClusterIssuers reference them by those exact names.
+
+#### 3. Rotate / revoke
+
+Create a new token, re-run step 2 (delete and recreate the Secret), then revoke the old
+token under **My Profile → API Tokens**.
 
 ### Let's Encrypt: staging vs. prod
 
